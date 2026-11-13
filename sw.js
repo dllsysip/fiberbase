@@ -1,11 +1,24 @@
 // Service Worker برای کار آفلاین (stale-while-revalidate)
-const CACHE_NAME = 'fiberbase-v2.3.0';
+const CACHE_NAME = 'fiberbase-v2.3.1';
 const APP_SHELL = ['./', './index.html', './manifest.json', './icons/icon.svg'];
+const CDN = [
+    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css',
+    'https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css',
+    'https://code.jquery.com/jquery-3.6.0.min.js',
+    'https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js',
+    'https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js',
+    'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'
+];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => cache.addAll(APP_SHELL))
+            .then(async (cache) => {
+                await cache.addAll(APP_SHELL);
+                await Promise.all(CDN.map((u) =>
+                    fetch(u, { mode: 'no-cors' }).then((r) => cache.put(u, r)).catch(() => {})));
+            })
             .then(() => self.skipWaiting())
     );
 });
