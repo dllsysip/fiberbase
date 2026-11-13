@@ -168,7 +168,7 @@
                 حساب کاربری ندارید؟ ثبت‌نام کنید
             </button>
         </div>
-        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.6</span></div>
+        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.7</span></div>
     </div>
 
     <!-- داشبورد اصلی -->
@@ -432,7 +432,7 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>نسخه نرم‌افزار:</span>
-                        <span class="badge bg-success">v2.3.6</span>
+                        <span class="badge bg-success">v2.3.7</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>تاریخ آخرین نسخه:</span>
@@ -521,7 +521,33 @@
         return diff === 0;
     }
 
-    function showError(msg) { alert(msg); }
+    function showDialog(msg, opts) {
+        opts = opts || {};
+        return new Promise((resolve) => {
+            const id = 'dlg' + Date.now();
+            const input = opts.input ? '<input type="password" class="form-control mt-3" id="' + id + 'i" autocomplete="off">' : '';
+            const cancel = (opts.confirm || opts.input) ? '<button type="button" class="btn btn-secondary" data-r="0">انصراف</button>' : '';
+            $('body').append('<div class="modal fade" id="' + id + '" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" dir="rtl">' +
+                '<div class="modal-header"><h5 class="modal-title">FiberBase</h5></div>' +
+                '<div class="modal-body"><div id="' + id + 'm"></div>' + input + '</div>' +
+                '<div class="modal-footer"><button type="button" class="btn btn-primary" data-r="1">تأیید</button>' + cancel + '</div></div></div></div>');
+            const el = document.getElementById(id);
+            $('#' + id + 'm').text(msg);
+            const modal = new bootstrap.Modal(el);
+            let result = opts.input ? null : false;
+            $(el).on('click', 'button[data-r]', function () {
+                if (this.dataset.r === '1') result = opts.input ? $('#' + id + 'i').val() : true;
+                modal.hide();
+            });
+            $(el).on('hidden.bs.modal', () => { modal.dispose(); $(el).remove(); resolve(result); });
+            modal.show();
+            if (opts.input) el.addEventListener('shown.bs.modal', () => $('#' + id + 'i').trigger('focus'));
+        });
+    }
+    function showError(msg) { return showDialog(msg); }
+    function notify(msg) { return showDialog(msg); }
+    function askConfirm(msg) { return showDialog(msg, { confirm: true }); }
+    function askPassword(msg) { return showDialog(msg, { input: true }); }
 
     function cryptoAvailable() {
         return !!(window.crypto && crypto.subtle);
@@ -661,6 +687,9 @@
 
         $('#f_date').val(new persianDate().format('YYYY/MM/DD'));
 
+        $('#authForm input[required]').on('invalid', function () {
+            if (this.validity.valueMissing) this.setCustomValidity(this.id === 'authUsername' ? 'لطفاً نام کاربری را وارد کنید.' : 'لطفاً رمز عبور را وارد کنید.');
+        }).on('input', function () { if (this.id !== 'authPassword') this.setCustomValidity(''); });
         $('#authPassword').on('input', function () {
             if (this.value.length > 0 && this.value.length < 6) {
                 this.setCustomValidity('رمز عبور باید حداقل ۶ کاراکتر باشد.');
@@ -768,7 +797,7 @@
             users[u] = await makePasswordRecord(p);
             users[u].fullName = fullName;
             saveUsers(users);
-            alert('ثبت‌نام با موفقیت انجام شد. حالا وارد شوید.');
+            notify('ثبت‌نام با موفقیت انجام شد. حالا وارد شوید.');
             $('#toggleAuthBtn').trigger('click');
             return;
         }
@@ -812,7 +841,7 @@
     }
 
     async function requirePassword(user) {
-        const p = prompt(`برای تأیید، رمز عبور حساب "${user}" را وارد کنید:`);
+        const p = await askPassword(`برای تأیید، رمز عبور حساب "${user}" را وارد کنید:`);
         if (!p) return false;
         const users = getUsers();
         const result = users[user] ? await verifyPassword(p, users[user]) : false;
@@ -825,7 +854,7 @@
     $('#deleteAccountBtn').on('click', async function () {
         const user = currentUser();
         if (!user) return;
-        if (!confirm(`آیا از حذف حساب "${user}" و تمام رکوردهای آن مطمئن هستید؟ این عمل غیرقابل برگشت است.`)) return;
+        if (!(await askConfirm(`آیا از حذف حساب "${user}" و تمام رکوردهای آن مطمئن هستید؟ این عمل غیرقابل برگشت است.`))) return;
         if (!(await requirePassword(user))) return;
 
         const users = getUsers();
@@ -854,7 +883,7 @@
         $('#f_date').val(savedDate);
 
         renderLastRecordAccordion();
-        alert('اطلاعات با موفقیت ذخیره شد.');
+        notify('اطلاعات با موفقیت ذخیره شد.');
     });
 
     function renderLastRecordAccordion() {
@@ -936,15 +965,15 @@
         }
         records[index] = updated;
         if (!saveUserRecords(records)) return;
-        alert('اطلاعات با موفقیت به‌روزرسانی شد.');
+        notify('اطلاعات با موفقیت به‌روزرسانی شد.');
         initEditTab();
     });
 
-    $('#deleteRecordBtn').on('click', function () {
+    $('#deleteRecordBtn').on('click', async function () {
         const id = $('#edit_id').val();
-        if (!confirm('آیا این رکورد حذف شود؟')) return;
+        if (!(await askConfirm('آیا این رکورد حذف شود؟'))) return;
         saveUserRecords(getUserRecords().filter(r => r.id !== id));
-        alert('رکورد حذف شد.');
+        notify('رکورد حذف شد.');
         initEditTab();
     });
 
@@ -1059,7 +1088,7 @@
         }
 
         const reader = new FileReader();
-        reader.onload = function (e) {
+        reader.onload = async function (e) {
             let data;
             try {
                 data = JSON.parse(e.target.result);
@@ -1090,9 +1119,9 @@
             const msg = `تعداد ${valid.length} رکورد معتبر پیدا شد` +
                 (skipped ? ` و ${skipped} رکورد نامعتبر نادیده گرفته می‌شود` : '') +
                 `. اطلاعات فعلی با این اطلاعات جایگزین شوند؟`;
-            if (!confirm(msg)) return;
+            if (!(await askConfirm(msg))) return;
             if (saveUserRecords(valid)) {
-                alert('اطلاعات با موفقیت بازیابی شد.');
+                notify('اطلاعات با موفقیت بازیابی شد.');
                 renderAccountTab();
             }
         };
