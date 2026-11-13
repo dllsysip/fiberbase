@@ -152,6 +152,15 @@
                 <label class="form-label" for="authFullName">نام کاربر:</label>
                 <input type="text" id="authFullName" class="form-control" maxlength="60" placeholder="مثلاً: علی محمودی" autocomplete="off">
             </div>
+            <div class="mb-3" id="mobileGroup" style="display:none;">
+                <label class="form-label" for="authMobile">شماره موبایل:</label>
+                <input type="tel" id="authMobile" class="form-control" maxlength="11" inputmode="numeric" dir="ltr" placeholder="09123456789" autocomplete="off">
+            </div>
+            <div class="mb-3" id="codeGroup" style="display:none;">
+                <label class="form-label" for="authCode">کد تأیید:</label>
+                <input type="text" id="authCode" class="form-control" maxlength="10" inputmode="numeric" dir="ltr" autocomplete="off">
+                <div class="form-text">شماره موبایل خود را برای مدیر ارسال کنید و کد تأیید را از او دریافت کنید.</div>
+            </div>
             <div class="mb-3">
                 <label class="form-label" for="authUsername">نام کاربری:</label>
                 <input type="text" id="authUsername" class="form-control" required maxlength="32" autocomplete="username">
@@ -168,7 +177,7 @@
                 حساب کاربری ندارید؟ ثبت‌نام کنید
             </button>
         </div>
-        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.7</span></div>
+        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.8</span></div>
     </div>
 
     <!-- داشبورد اصلی -->
@@ -432,7 +441,7 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>نسخه نرم‌افزار:</span>
-                        <span class="badge bg-success">v2.3.7</span>
+                        <span class="badge bg-success">v2.3.8</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>تاریخ آخرین نسخه:</span>
@@ -544,6 +553,8 @@
             if (opts.input) el.addEventListener('shown.bs.modal', () => $('#' + id + 'i').trigger('focus'));
         });
     }
+    // کد تأیید = چهار رقم آخر موبایل × این ضریب (فقط برای کنترل ساده، امنیت واقعی ندارد)
+    const INVITE_MULTIPLIER = 7;
     function showError(msg) { return showDialog(msg); }
     function notify(msg) { return showDialog(msg); }
     function askConfirm(msg) { return showDialog(msg, { confirm: true }); }
@@ -758,7 +769,7 @@
         $('#authTitle').text(isRegisterMode ? 'ثبت‌نام کاربر جدید' : 'ورود به سامانه');
         $('#authSubmitBtn').text(isRegisterMode ? 'ثبت‌نام' : 'ورود');
         $('#passwordHint').toggle(isRegisterMode);
-        $('#fullNameGroup').toggle(isRegisterMode);
+        $('#fullNameGroup, #mobileGroup, #codeGroup').toggle(isRegisterMode);
         $('#authPassword').attr('autocomplete', isRegisterMode ? 'new-password' : 'current-password');
         $(this).text(isRegisterMode ? 'حساب دارید؟ وارد شوید' : 'حساب کاربری ندارید؟ ثبت‌نام کنید');
         $('#authForm')[0].reset();
@@ -790,12 +801,23 @@
                 showError('نام کاربر را وارد کنید.');
                 return;
             }
+            const mobile = toEnDigits($('#authMobile').val().trim());
+            if (!/^09\d{9}$/.test(mobile)) {
+                showError('شماره موبایل معتبر نیست. مثال: 09123456789');
+                return;
+            }
+            const code = toEnDigits($('#authCode').val().trim());
+            if (code !== String(Number(mobile.slice(-4)) * INVITE_MULTIPLIER)) {
+                showError('کد تأیید اشتباه است.');
+                return;
+            }
             if (users[u]) {
                 showError('این نام کاربری از قبل وجود دارد.');
                 return;
             }
             users[u] = await makePasswordRecord(p);
             users[u].fullName = fullName;
+            users[u].mobile = mobile;
             saveUsers(users);
             notify('ثبت‌نام با موفقیت انجام شد. حالا وارد شوید.');
             $('#toggleAuthBtn').trigger('click');
