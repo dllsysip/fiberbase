@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fiberbase-v2.3.11';
+const CACHE_NAME = 'fiberbase-v2.3.14';
 
 const APP_SHELL = [
     './',

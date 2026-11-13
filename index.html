@@ -180,7 +180,7 @@
                 حساب کاربری ندارید؟ ثبت‌نام کنید
             </button>
         </div>
-        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.11</span></div>
+        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.14</span></div>
     </div>
 
     <!-- داشبورد اصلی -->
@@ -444,7 +444,7 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>نسخه نرم‌افزار:</span>
-                        <span class="badge bg-success">v2.3.11</span>
+                        <span class="badge bg-success">v2.3.14</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>تاریخ آخرین نسخه:</span>
@@ -556,10 +556,13 @@
             if (opts.input) el.addEventListener('shown.bs.modal', () => $('#' + id + 'i').trigger('focus'));
         });
     }
-    // کد درخواست = شمارنده دقیقه از 1970 (۶ رقم آخر)؛ کد تأیید = 1364 + 10 × گرد(کد درخواست ÷ 2) (کنترل ساده، امنیت واقعی ندارد)
+    // کد درخواست = گرد(HHMMDDMM ÷ 7)؛ کد تأیید = 1364 + 3 × کد درخواست (کنترل ساده، امنیت واقعی ندارد)
     let currentChallenge = '';
     function newChallenge() {
-        currentChallenge = String(Math.floor(Date.now() / 60000) % 1000000).padStart(6, '0');
+        const d = new Date();
+        const raw = String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0')
+            + String(d.getDate()).padStart(2, '0') + String(d.getMonth() + 1).padStart(2, '0');
+        currentChallenge = String(Math.round(Number(raw) / 7));
         $('#challengeBox').text(currentChallenge);
     }
     function showError(msg) { return showDialog(msg); }
@@ -815,7 +818,7 @@
                 return;
             }
             const code = toEnDigits($('#authCode').val().trim());
-            if (code !== String(1364 + 10 * Math.round(Number(currentChallenge) / 2))) {
+            if (code !== String(1364 + 3 * Number(currentChallenge))) {
                 showError('کد تأیید اشتباه است.');
                 return;
             }
