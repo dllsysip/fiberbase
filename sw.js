@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fiberbase-v2.3.14';
+const CACHE_NAME = 'fiberbase-v2.3.15';
 
 const APP_SHELL = [
     './',
@@ -26,12 +26,12 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME).then(async (cache) => {
             // هر فایل جداگانه: اگر یکی خطا داد، نصب کامل شکست نخورد
             await Promise.all(APP_SHELL.map((u) => cache.add(u).catch(() => {})));
-            // CDN در پس‌زمینه کش می‌شود (پاسخ opaque برای no-cors)
-            CDN.forEach((u) => {
+            // CDN هم تا پایان نصب منتظر می‌ماند (پاسخ opaque برای no-cors)
+            await Promise.all(CDN.map((u) =>
                 fetch(new Request(u, { mode: 'no-cors' }))
                     .then((res) => cache.put(u, res))
-                    .catch(() => {});
-            });
+                    .catch(() => {})
+            ));
         })
     );
 });
@@ -55,7 +55,7 @@ self.addEventListener('fetch', (event) => {
     // stale-while-revalidate: نسخه کش‌شده فوری، و به‌روزرسانی در پس‌زمینه
     event.respondWith(
         caches.open(CACHE_NAME).then(async (cache) => {
-            const cached = await cache.match(req, { ignoreSearch: true });
+            const cached = (await cache.match(req, { ignoreSearch: true })) || (await caches.match(req, { ignoreSearch: true }));
             const network = fetch(req)
                 .then((res) => {
                     if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
                 return cached;
             }
             const res = await network;
-            return res || caches.match('./index.html');
+            return res || (await caches.match('./index.html')) || (await caches.match('./')) || Response.error();
         })
     );
 });
