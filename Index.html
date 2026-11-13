@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FiberBasePWA</title>
+    
+    <!-- قابلیت‌های Standalone و PWA برای تبدیل به شورتکات اپ موبایل -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FiberBase">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- آیکون اپلیکیشن به صورت Base64 تعبیه شده در خود فایل (بدون نیاز به فایل خارجی) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%230f172a'/%3E%3Cpath d='M120 380 L220 220 L300 280 L400 120' stroke='%230d6efd' stroke-width='32' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='120' cy='380' r='24' fill='%2300d2d3'/%3E%3Ccircle cx='220' cy='220' r='24' fill='%2300d2d3'/%3E%3Ccircle cx='300' cy='280' r='24' fill='%2300d2d3'/%3E%3Ccircle cx='400' cy='120' r='24' fill='%23ff9f43'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%230f172a'/%3E%3Cpath d='M120 380 L220 220 L300 280 L400 120' stroke='%230d6efd' stroke-width='32' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Ccircle cx='120' cy='380' r='24' fill='%2300d2d3'/%3E%3Ccircle cx='220' cy='220' r='24' fill='%2300d2d3'/%3E%3Ccircle cx='300' cy='280' r='24' fill='%2300d2d3'/%3E%3Ccircle cx='400' cy='120' r='24' fill='%23ff9f43'/%3E%3C/svg%3E">
+
+    <!-- مانیفست تعبیه‌شده برای قابلیت نصب و فول‌اسکرین در موبایل -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"FiberBase PWA","short_name":"FiberBase","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22100%22 fill=%22%230f172a%22/%3E%3Cpath d=%22M120 380 L220 220 L300 280 L400 120%22 stroke=%22%230d6efd%22 stroke-width=%2232%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 fill=%22none%22/%3E%3Ccircle cx=%22120%22 cy=%22380%22 r=%2224%22 fill=%22%2300d2d3%22/%3E%3Ccircle cx=%22220%22 cy=%22220%22 r=%2224%22 fill=%22%2300d2d3%22/%3E%3Ccircle cx=%22300%22 cy=%22280%22 r=%2224%22 fill=%22%2300d2d3%22/%3E%3Ccircle cx=%22400%22 cy=%22120%22 r=%2224%22 fill=%22%23ff9f43%22/%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml"}]}'>
+
+    <!-- بوت‌استرپ و فایل‌های استایل -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- استایل تقویم شمسی -->
+    <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css"/>
+
+    <!-- کتابخانه‌ها -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+    <script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Vazirmatn", Tahoma, sans-serif;
+            font-size: 13px;
+            padding-bottom: 75px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .app-header {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #0d6efd;
+        }
+        .card-custom {
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            padding: 14px;
+            margin-top: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .section-label {
+            font-weight: bold;
+            color: #0d6efd;
+            font-size: 12px;
+            margin-top: 10px;
+            margin-bottom: 8px;
+            border-bottom: 1px dashed #cbd5e1;
+            padding-bottom: 3px;
+        }
+        .form-label-material {
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 2px;
+            display: block;
+        }
+        .form-control, .form-select {
+            font-size: 12px;
+            padding: 5px 8px;
+            border-radius: 6px;
+        }
+        .table-responsive {
+            max-height: 380px;
+            overflow-y: auto;
+        }
+        .table th, .table td {
+            font-size: 11px;
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid #cbd5e1;
+            padding: 6px 0;
+            z-index: 1050;
+        }
+        .bottom-nav button {
+            border: none;
+            background: none;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 25%;
+            padding: 4px 0;
+        }
+        .bottom-nav button.active {
+            color: #0d6efd;
+            font-weight: bold;
+        }
+        .pdatepicker-plot-area {
+            font-family: inherit !important;
+            z-index: 99999 !important;
+        }
+        .material-list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 8px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 12px;
+        }
+        .material-list-item:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .help-shortcut-box {
+            background: #eff6ff;
+            border: 1px dashed #93c5fd;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 12px;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid px-2">
+
+    <!-- بخش ورود و ثبت نام -->
+    <div id="authSection" class="card-custom mt-4">
+        
+        <!-- راهنمای افزودن به صفحه اصلی -->
+        <div class="help-shortcut-box">
+            💡 <strong>راهنما:</strong> برای استفاده آسان و بدون دردسر، روی سه‌نقطه مرورگر (در اندروید) یا دکمه اشتراک‌گذاری (در آیفون) بزنید و گزینه <strong>«افزودن به صفحه اصلی» (Add to Home screen)</strong> را انتخاب کنید تا آیکون برنامه روی صفحه موبایلتان ساخته شود.
+        </div>
+
+        <div class="text-center mb-3">
+            <h4 class="fw-bold text-primary mb-1">FiberBasePWA</h4>
+            <span class="text-muted" id="authTitle" style="font-size: 13px;">ورود به سامانه</span>
+        </div>
+        <form id="authForm">
+            <div class="mb-3">
+                <label class="form-label">نام کاربری:</label>
+                <input type="text" id="authUsername" class="form-control" required autocomplete="off">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">رمز عبور:</label>
+                <input type="password" id="authPassword" class="form-control" required autocomplete="off">
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2" id="authSubmitBtn">ورود</button>
+        </form>
+        <div class="text-center mt-3">
+            <button type="button" class="btn btn-link btn-sm text-decoration-none" id="toggleAuthBtn">
+                حساب کاربری ندارید؟ ثبت‌نام کنید
+            </button>
+        </div>
+    </div>
+
+    <!-- داشبورد اصلی برنامه -->
+    <div id="mainDashboard" style="display: none;">
+        
+        <!-- هدر اصلی اپلیکیشن -->
+        <div class="app-header rounded">
+            <div class="fw-bold fs-6">FiberBasePWA</div>
+            <div>
+                <span class="badge bg-primary" id="displayUser"></span>
+            </div>
+        </div>
+
+        <!-- تب ۱: ثبت اطلاعات جدید -->
+        <div id="tab1_content" class="tab-pane-content">
+            <div class="card-custom">
+                <h6 class="fw-bold text-dark mb-2">ثبت اطلاعات مشترک و تجهیزات</h6>
+                <form id="recordForm">
+                    
+                    <div class="section-label">مشخصات پایه مشترک</div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label-material">تاریخ (تقویم لمسی):</label>
+                            <input type="text" id="f_date" class="form-control shamsi-picker text-center" readonly required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-material">نام مشترک:</label>
+                            <input type="text" id="f_name" class="form-control" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-material">موبایل:</label>
+                            <input type="tel" id="f_mobile" class="form-control" placeholder="09xxxxxxxxx">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-material">تلفن ثابت:</label>
+                            <input type="tel" id="f_phone" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label-material">آدرس:</label>
+                            <input type="text" id="f_address" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="section-label">کابل دراپ بیرونی (Out)</div>
+                    <div class="row g-2">
+                        <div class="col"><label class="form-label-material">دراپ 2</label><input type="number" id="f_out2" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 4</label><input type="number" id="f_out4" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 6</label><input type="number" id="f_out6" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 8</label><input type="number" id="f_out8" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 12</label><input type="number" id="f_out12" class="form-control"></div>
+                    </div>
+
+                    <div class="section-label">باکس FAT</div>
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label-material">FAT 24</label><input type="number" id="f_fat24" class="form-control"></div>
+                        <div class="col-6"><label class="form-label-material">FAT 48</label><input type="number" id="f_fat48" class="form-control"></div>
+                    </div>
+
+                    <div class="section-label">کابل دراپ درونی (In)</div>
+                    <div class="row g-2">
+                        <div class="col"><label class="form-label-material">دراپ 2</label><input type="number" id="f_in2" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 4</label><input type="number" id="f_in4" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 6</label><input type="number" id="f_in6" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 8</label><input type="number" id="f_in8" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 12</label><input type="number" id="f_in12" class="form-control"></div>
+                    </div>
+
+                    <div class="section-label">اتصالات و متعلقات</div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"><label class="form-label-material">آداپتور دوبل</label><input type="number" id="f_adaptor" class="form-control"></div>
+                        <div class="col-6"><label class="form-label-material">پیکتل</label><input type="number" id="f_pigtail" class="form-control"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2">ثبت اطلاعات جدید</button>
+                </form>
+            </div>
+
+            <!-- آخرین رکورد ثبت شده -->
+            <div class="card-custom">
+                <div class="accordion" id="lastRecordAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingLastRec">
+                            <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLastRec" aria-expanded="false">
+                                📌 <strong>مشاهده آخرین رکورد ثبت‌شده</strong>
+                            </button>
+                        </h2>
+                        <div id="collapseLastRec" class="accordion-collapse collapse" data-bs-parent="#lastRecordAccordion">
+                            <div class="accordion-body p-2" id="lastRecordDetail">
+                                <span class="text-muted">هنوز رکوردی ثبت نشده است.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- تب ۲: ویرایش اطلاعات -->
+        <div id="tab2_content" class="tab-pane-content" style="display: none;">
+            <div class="card-custom">
+                <h6 class="fw-bold text-dark mb-3">جستجو و ویرایش رکورد</h6>
+                
+                <div class="mb-3">
+                    <label class="form-label-material">جستجوی نام مشترک:</label>
+                    <input type="text" id="editSearchInput" class="form-control" placeholder="تایپ کنید...">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label-material">انتخاب مشترک مورد نظر:</label>
+                    <select id="editSelectRecord" class="form-select">
+                        <option value="">-- مشترک را انتخاب کنید --</option>
+                    </select>
+                </div>
+
+                <hr>
+
+                <form id="editForm" style="display: none;">
+                    <input type="hidden" id="edit_id">
+
+                    <div class="section-label">مشخصات پایه</div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label-material">تاریخ:</label>
+                            <input type="text" id="edit_date" class="form-control shamsi-picker text-center" readonly required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-material">نام مشترک:</label>
+                            <input type="text" id="edit_name" class="form-control" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-material">موبایل:</label>
+                            <input type="tel" id="edit_mobile" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-material">تلفن ثابت:</label>
+                            <input type="tel" id="edit_phone" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label-material">آدرس:</label>
+                            <input type="text" id="edit_address" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="section-label">دراپ بیرونی (Out)</div>
+                    <div class="row g-2">
+                        <div class="col"><label class="form-label-material">دراپ 2</label><input type="number" id="edit_out2" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 4</label><input type="number" id="edit_out4" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 6</label><input type="number" id="edit_out6" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 8</label><input type="number" id="edit_out8" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 12</label><input type="number" id="edit_out12" class="form-control"></div>
+                    </div>
+
+                    <div class="section-label">باکس FAT</div>
+                    <div class="row g-2">
+                        <div class="col-6"><label class="form-label-material">FAT 24</label><input type="number" id="edit_fat24" class="form-control"></div>
+                        <div class="col-6"><label class="form-label-material">FAT 48</label><input type="number" id="edit_fat48" class="form-control"></div>
+                    </div>
+
+                    <div class="section-label">دراپ درونی (In)</div>
+                    <div class="row g-2">
+                        <div class="col"><label class="form-label-material">دراپ 2</label><input type="number" id="edit_in2" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 4</label><input type="number" id="edit_in4" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 6</label><input type="number" id="edit_in6" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 8</label><input type="number" id="edit_in8" class="form-control"></div>
+                        <div class="col"><label class="form-label-material">دراپ 12</label><input type="number" id="edit_in12" class="form-control"></div>
+                    </div>
+
+                    <div class="section-label">متعلقات</div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6"><label class="form-label-material">آداپتور دوبل</label><input type="number" id="edit_adaptor" class="form-control"></div>
+                        <div class="col-6"><label class="form-label-material">پیکتل</label><input type="number" id="edit_pigtail" class="form-control"></div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-warning flex-grow-1 py-2 fw-bold">ذخیره تغییرات</button>
+                        <button type="button" class="btn btn-danger py-2" onclick="deleteSelectedRecord()">حذف رکورد</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- تب ۳: گزارشات و فیلتر -->
+        <div id="tab3_content" class="tab-pane-content" style="display: none;">
+            <div class="card-custom">
+                <h6 class="fw-bold text-dark mb-2">فیلتر گزارش بر اساس تاریخ</h6>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label-material">از تاریخ:</label>
+                        <input type="text" id="reportStartDate" class="form-control shamsi-picker text-center" readonly placeholder="انتخاب تاریخ">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label-material">تا تاریخ:</label>
+                        <input type="text" id="reportEndDate" class="form-control shamsi-picker text-center" readonly placeholder="انتخاب تاریخ">
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-primary w-100 py-1" onclick="applyDateFilter()">اعمال فیلتر</button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-secondary w-100 py-1" onclick="resetDateFilter()">نمایش همه</button>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold">نتایج (<span id="reportCount">0</span> رکورد):</span>
+                    <button class="btn btn-success btn-sm" onclick="exportFilteredExcel()">
+                        📥 خروجی اکسل
+                    </button>
+                </div>
+
+                <div class="table-responsive border rounded">
+                    <table class="table table-bordered table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>تاریخ</th>
+                                <th>مشترک</th>
+                                <th>موبایل</th>
+                                <th>تلفن</th>
+                                <th>آدرس</th>
+                                <th>دراپ 2 Out</th>
+                                <th>دراپ 4 Out</th>
+                                <th>دراپ 6 Out</th>
+                                <th>دراپ 8 Out</th>
+                                <th>دراپ 12 Out</th>
+                                <th>FAT 24</th>
+                                <th>FAT 48</th>
+                                <th>دراپ 2 In</th>
+                                <th>دراپ 4 In</th>
+                                <th>دراپ 6 In</th>
+                                <th>دراپ 8 In</th>
+                                <th>دراپ 12 In</th>
+                                <th>آداپتور</th>
+                                <th>پیکتل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- تب ۴: حساب کاربری و پشتیبان‌گیری -->
+        <div id="tab4_content" class="tab-pane-content" style="display: none;">
+            <div class="card-custom">
+                <h6 class="fw-bold text-dark mb-3">مدیریت حساب کاربری</h6>
+                
+                <div class="p-3 bg-light rounded border mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>نام کاربری فعال:</span>
+                        <strong class="text-primary fs-6" id="accountUsernameDisplay"></strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>تعداد کل رکوردهای ثبت‌شده:</span>
+                        <span class="badge bg-secondary" id="accountTotalRecords">0</span>
+                    </div>
+                </div>
+
+                <div class="section-label">پشتیبان‌گیری از داده‌ها</div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <button class="btn btn-outline-primary btn-sm w-100 py-2" onclick="backupUserData()">
+                            📤 دانلود بکاپ
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <label class="btn btn-outline-success btn-sm w-100 py-2 mb-0">
+                            📥 بازیابی بکاپ
+                            <input type="file" id="restoreFileInput" accept=".json" style="display: none;" onchange="restoreUserData(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mb-3">
+                    <button class="btn btn-outline-dark py-2" onclick="logout()">
+                        🚪 خروج از حساب کاربری
+                    </button>
+                    <button class="btn btn-danger py-2" onclick="deleteMyAccount()">
+                        🗑️ حذف کامل حساب و اطلاعات
+                    </button>
+                </div>
+            </div>
+
+            <!-- اطلاعات نرم‌افزار -->
+            <div class="card-custom">
+                <h6 class="fw-bold text-dark mb-3">درباره نرم‌افزار</h6>
+                
+                <ul class="list-group list-group-flush" style="font-size: 12px;">
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span>نام نرم‌افزار:</span>
+                        <strong class="text-primary">FiberBasePWA</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span>نسخه نرم‌افزار:</span>
+                        <span class="badge bg-success">v2.2.0</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span>تاریخ آخرین نسخه:</span>
+                        <span>1405/08/22</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span>نام برنامه‌نویس:</span>
+                        <strong class="text-dark">علی محمودی</strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- منوی ناوبری پایینی ۴ تبه -->
+    <div id="bottomNav" class="bottom-nav" style="display: none;">
+        <button id="navTab1" class="active" onclick="switchTab('tab1')">
+            <span>📝</span>
+            <span>ثبت جدید</span>
+        </button>
+        <button id="navTab2" onclick="switchTab('tab2')">
+            <span>✏️</span>
+            <span>ویرایش</span>
+        </button>
+        <button id="navTab3" onclick="switchTab('tab3')">
+            <span>📊</span>
+            <span>گزارشات</span>
+        </button>
+        <button id="navTab4" onclick="switchTab('tab4')">
+            <span>👤</span>
+            <span>حساب کاربری</span>
+        </button>
+    </div>
+
+</div>
+
+<script>
+    const USERS_KEY = 'FTTH_USERS';
+    const SESSION_KEY = 'GAPGPTMASKTOKENqzrmz537w4X0X';
+    const RECORDS_KEY_PREFIX = 'FTTH_DATA_';
+
+    let isRegisterMode = false;
+    let currentlyFilteredRecords = [];
+
+    // تابع محاسبه هش SHA-256 برای پسوردها
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    $(document).ready(function() {
+        // فعال‌سازی تقویم شمسی
+        $('.shamsi-picker').pDatepicker({
+            format: 'YYYY/MM/DD',
+            autoClose: true,
+            initialValue: false,
+            persianDigit: false
+        });
+
+        // تنظیم تاریخ امروز به صورت خودکار
+        const todayDate = new persianDate().format('YYYY/MM/DD');
+        $('#f_date').val(todayDate);
+
+        checkSession();
+    });
+
+    function switchTab(tabId) {
+        $('.tab-pane-content').hide();
+        $('.bottom-nav button').removeClass('active');
+
+        if (tabId === 'tab1') {
+            $('#tab1_content').show();
+            $('#navTab1').addClass('active');
+            renderLastRecordAccordion();
+        } else if (tabId === 'tab2') {
+            $('#tab2_content').show();
+            $('#navTab2').addClass('active');
+            initEditTab();
+        } else if (tabId === 'tab3') {
+            $('#tab3_content').show();
+            $('#navTab3').addClass('active');
+            applyDateFilter();
+        } else if (tabId === 'tab4') {
+            $('#tab4_content').show();
+            $('#navTab4').addClass('active');
+            renderAccountTab();
+        }
+    }
+
+    // احراز هویت
+    $('#toggleAuthBtn').click(function() {
+        isRegisterMode = !isRegisterMode;
+        $('#authTitle').text(isRegisterMode ? 'ثبت‌نام کاربر جدید' : 'ورود به سامانه');
+        $('#authSubmitBtn').text(isRegisterMode ? 'ثبت‌نام' : 'ورود');
+        $(this).text(isRegisterMode ? 'حساب دارید؟ وارد شوید' : 'حساب کاربری ندارید؟ ثبت‌نام کنید');
+    });
+
+    $('#authForm').submit(async function(e) {
+        e.preventDefault();
+        const u = $('#authUsername').val().trim();
+        const p = $('#authPassword').val();
+        if (!u || !p) return;
+
+        const hashed = await sha256(p);
+        let users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+
+        if (isRegisterMode) {
+            if (users[u]) {
+                alert('این نام کاربری از قبل وجود دارد.');
+                return;
+            }
+            users[u] = hashed;
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            alert('ثبت‌نام با موفقیت انجام شد. حالا وارد شوید.');
+            $('#toggleAuthBtn').click();
+        } else {
+            if (users[u] && users[u] === hashed) {
+                localStorage.setItem(SESSION_KEY, u);
+                checkSession();
+            } else {
+                alert('نام کاربری یا رمز عبور اشتباه است.');
+            }
+        }
+    });
+
+    function checkSession() {
+        const user = localStorage.getItem(SESSION_KEY);
+        if (user) {
+            $('#authSection').hide();
+            $('#mainDashboard').show();
+            $('#bottomNav').show();
+            $('#displayUser').text(user);
+            switchTab('tab1');
+        } else {
+            $('#authSection').show();
+            $('#mainDashboard').hide();
+            $('#bottomNav').hide();
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem(SESSION_KEY);
+        checkSession();
+    }
+
+    function deleteMyAccount() {
+        const user = localStorage.getItem(SESSION_KEY);
+        if (confirm(`آیا از حذف حساب "${user}" و تمام رکوردهای آن مطمئن هستید؟ این عمل غیرقابل برگشت است.`)) {
+            let users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+            delete users[user];
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            localStorage.removeItem(RECORDS_KEY_PREFIX + user);
+            logout();
+        }
+    }
+
+    function getUserRecords() {
+        const user = localStorage.getItem(SESSION_KEY);
+        return JSON.parse(localStorage.getItem(RECORDS_KEY_PREFIX + user) || '[]');
+    }
+
+    function saveUserRecords(records) {
+        const user = localStorage.getItem(SESSION_KEY);
+        localStorage.setItem(RECORDS_KEY_PREFIX + user, JSON.stringify(records));
+    }
+
+    // تب ۱: ثبت اطلاعات
+    $('#recordForm').submit(function(e) {
+        e.preventDefault();
+        const record = {
+            id: Date.now(),
+            date: $('#f_date').val().trim(),
+            name: $('#f_name').val().trim(),
+            mobile: $('#f_mobile').val().trim() || '-',
+            phone: $('#f_phone').val().trim() || '-',
+            address: $('#f_address').val().trim() || '-',
+            out2: $('#f_out2').val() || '0',
+            out4: $('#f_out4').val() || '0',
+            out6: $('#f_out6').val() || '0',
+            out8: $('#f_out8').val() || '0',
+            out12: $('#f_out12').val() || '0',
+            fat24: $('#f_fat24').val() || '0',
+            fat48: $('#f_fat48').val() || '0',
+            in2: $('#f_in2').val() || '0',
+            in4: $('#f_in4').val() || '0',
+            in6: $('#f_in6').val() || '0',
+            in8: $('#f_in8').val() || '0',
+            in12: $('#f_in12').val() || '0',
+            adaptor: $('#f_adaptor').val() || '0',
+            pigtail: $('#f_pigtail').val() || '0'
+        };
+
+        const records = getUserRecords();
+        records.unshift(record);
+        saveUserRecords(records);
+
+        const savedDate = $('#f_date').val();
+        $('#recordForm')[0].reset();
+        $('#f_date').val(savedDate);
+
+        renderLastRecordAccordion();
+        alert('اطلاعات با موفقیت ذخیره شد.');
+    });
+
+    // رندر آخرین رکورد در لیست آکاردئونی
+    function renderLastRecordAccordion() {
+        const records = getUserRecords();
+        const container = $('#lastRecordDetail');
+
+        if (records.length === 0) {
+            container.html('<span class="text-muted">هنوز رکوردی ثبت نشده است.</span>');
+            return;
+        }
+
+        const r = records[0];
+        container.html(`
+            <div class="mb-2 p-2 bg-white rounded border">
+                <div><strong>نام مشترک:</strong> ${r.name}</div>
+                <div><strong>تاریخ:</strong> ${r.date}</div>
+                <div><strong>موبایل:</strong> ${r.mobile}</div>
+                <div><strong>تلفن ثابت:</strong> ${r.phone}</div>
+                <div><strong>آدرس:</strong> ${r.address}</div>
+            </div>
+            
+            <div class="rounded border bg-white overflow-hidden">
+                <div class="material-list-item"><span>دراپ 2 (Out):</span><strong>${r.out2}</strong></div>
+                <div class="material-list-item"><span>دراپ 4 (Out):</span><strong>${r.out4}</strong></div>
+                <div class="material-list-item"><span>دراپ 6 (Out):</span><strong>${r.out6}</strong></div>
+                <div class="material-list-item"><span>دراپ 8 (Out):</span><strong>${r.out8}</strong></div>
+                <div class="material-list-item"><span>دراپ 12 (Out):</span><strong>${r.out12}</strong></div>
+                <div class="material-list-item"><span>FAT 24:</span><strong>${r.fat24}</strong></div>
+                <div class="material-list-item"><span>FAT 48:</span><strong>${r.fat48}</strong></div>
+                <div class="material-list-item"><span>دراپ 2 (In):</span><strong>${r.in2}</strong></div>
+                <div class="material-list-item"><span>دراپ 4 (In):</span><strong>${r.in4}</strong></div>
+                <div class="material-list-item"><span>دراپ 6 (In):</span><strong>${r.in6}</strong></div>
+                <div class="material-list-item"><span>دراپ 8 (In):</span><strong>${r.in8}</strong></div>
+                <div class="material-list-item"><span>دراپ 12 (In):</span><strong>${r.in12}</strong></div>
+                <div class="material-list-item"><span>آداپتور دوبل:</span><strong>${r.adaptor}</strong></div>
+                <div class="material-list-item"><span>پیکتل:</span><strong>${r.pigtail}</strong></div>
+            </div>
+        `);
+    }
+
+    // تب ۲: ویرایش
+    function initEditTab() {
+        $('#editSearchInput').val('');
+        $('#editForm').hide();
+        populateEditList(getUserRecords());
+    }
+
+    $('#editSearchInput').on('input', function() {
+        const q = $(this).val().toLowerCase().trim();
+        const records = getUserRecords();
+        const filtered = records.filter(r => r.name.toLowerCase().includes(q));
+        populateEditList(filtered);
+    });
+
+    function populateEditList(records) {
+        const select = $('#editSelectRecord');
+        select.html('<option value="">-- مشترک را انتخاب کنید --</option>');
+        records.forEach(r => {
+            select.append(`<option value="${r.id}">${r.name} (${r.date}) - ${r.mobile}</option>`);
+        });
+    }
+
+    $('#editSelectRecord').change(function() {
+        const id = Number($(this).val());
+        if (!id) {
+            $('#editForm').hide();
+            return;
+        }
+        const records = getUserRecords();
+        const rec = records.find(r => r.id === id);
+        if (rec) {
+            $('#edit_id').val(rec.id);
+            $('#edit_date').val(rec.date);
+            $('#edit_name').val(rec.name);
+            $('#edit_mobile').val(rec.mobile === '-' ? '' : rec.mobile);
+            $('#edit_phone').val(rec.phone === '-' ? '' : rec.phone);
+            $('#edit_address').val(rec.address === '-' ? '' : rec.address);
+            $('#edit_out2').val(rec.out2);
+            $('#edit_out4').val(rec.out4);
+            $('#edit_out6').val(rec.out6);
+            $('#edit_out8').val(rec.out8);
+            $('#edit_out12').val(rec.out12);
+            $('#edit_fat24').val(rec.fat24);
+            $('#edit_fat48').val(rec.fat48);
+            $('#edit_in2').val(rec.in2);
+            $('#edit_in4').val(rec.in4);
+            $('#edit_in6').val(rec.in6);
+            $('#edit_in8').val(rec.in8);
+            $('#edit_in12').val(rec.in12);
+            $('#edit_adaptor').val(rec.adaptor);
+            $('#edit_pigtail').val(rec.pigtail);
+
+            $('#editForm').show();
+        }
+    });
+
+    $('#editForm').submit(function(e) {
+        e.preventDefault();
+        const id = Number($('#edit_id').val());
+        let records = getUserRecords();
+        const index = records.findIndex(r => r.id === id);
+
+        if (index !== -1) {
+            records[index] = {
+                id: id,
+                date: $('#edit_date').val().trim(),
+                name: $('#edit_name').val().trim(),
+                mobile: $('#edit_mobile').val().trim() || '-',
+                phone: $('#edit_phone').val().trim() || '-',
+                address: $('#edit_address').val().trim() || '-',
+                out2: $('#edit_out2').val() || '0',
+                out4: $('#edit_out4').val() || '0',
+                out6: $('#edit_out6').val() || '0',
+                out8: $('#edit_out8').val() || '0',
+                out12: $('#edit_out12').val() || '0',
+                fat24: $('#edit_fat24').val() || '0',
+                fat48: $('#edit_fat48').val() || '0',
+                in2: $('#edit_in2').val() || '0',
+                in4: $('#edit_in4').val() || '0',
+                in6: $('#edit_in6').val() || '0',
+                in8: $('#edit_in8').val() || '0',
+                in12: $('#edit_in12').val() || '0',
+                adaptor: $('#edit_adaptor').val() || '0',
+                pigtail: $('#edit_pigtail').val() || '0'
+            };
+
+            saveUserRecords(records);
+            alert('اطلاعات با موفقیت به‌روزرسانی شد.');
+            initEditTab();
+        }
+    });
+
+    function deleteSelectedRecord() {
+        const id = Number($('#edit_id').val());
+        if (confirm('آیا این رکورد حذف شود؟')) {
+            let records = getUserRecords().filter(r => r.id !== id);
+            saveUserRecords(records);
+            alert('رکورد حذف شد.');
+            initEditTab();
+        }
+    }
+
+    // تب ۳: گزارشات
+    function applyDateFilter() {
+        const start = $('#reportStartDate').val().trim();
+        const end = $('#reportEndDate').val().trim();
+        const records = getUserRecords();
+
+        currentlyFilteredRecords = records.filter(r => {
+            if (start && r.date < start) return false;
+            if (end && r.date > end) return false;
+            return true;
+        });
+
+        renderReportTable(currentlyFilteredRecords);
+    }
+
+    function resetDateFilter() {
+        $('#reportStartDate').val('');
+        $('#reportEndDate').val('');
+        applyDateFilter();
+    }
+
+    function renderReportTable(records) {
+        const tbody = $('#reportTableBody');
+        tbody.empty();
+        $('#reportCount').text(records.length);
+
+        if (records.length === 0) {
+            tbody.html('<tr><td colspan="20" class="p-3 text-muted">رکوردی یافت نشد.</td></tr>');
+            return;
+        }
+
+        records.forEach((r, idx) => {
+            tbody.append(`
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td>${r.date}</td>
+                    <td><strong>${r.name}</strong></td>
+                    <td>${r.mobile}</td>
+                    <td>${r.phone}</td>
+                    <td>${r.address}</td>
+                    <td>${r.out2}</td>
+                    <td>${r.out4}</td>
+                    <td>${r.out6}</td>
+                    <td>${r.out8}</td>
+                    <td>${r.out12}</td>
+                    <td>${r.fat24}</td>
+                    <td>${r.fat48}</td>
+                    <td>${r.in2}</td>
+                    <td>${r.in4}</td>
+                    <td>${r.in6}</td>
+                    <td>${r.in8}</td>
+                    <td>${r.in12}</td>
+                    <td>${r.adaptor}</td>
+                    <td>${r.pigtail}</td>
+                </tr>
+            `);
+        });
+    }
+
+    function exportFilteredExcel() {
+        if (!currentlyFilteredRecords || currentlyFilteredRecords.length === 0) {
+            alert('رکوردی برای خروجی اکسل وجود ندارد.');
+            return;
+        }
+
+        const excelRows = currentlyFilteredRecords.map((r, i) => ({
+            "ردیف": i + 1,
+            "تاریخ": r.date,
+            "نام مشترک": r.name,
+            "موبایل": r.mobile,
+            "تلفن ثابت": r.phone,
+            "آدرس": r.address,
+            "دراپ 2 (Out)": r.out2,
+            "دراپ 4 (Out)": r.out4,
+            "دراپ 6 (Out)": r.out6,
+            "دراپ 8 (Out)": r.out8,
+            "دراپ 12 (Out)": r.out12,
+            "FAT 24": r.fat24,
+            "FAT 48": r.fat48,
+            "دراپ 2 (In)": r.in2,
+            "دراپ 4 (In)": r.in4,
+            "دراپ 6 (In)": r.in6,
+            "دراپ 8 (In)": r.in8,
+            "دراپ 12 (In)": r.in12,
+            "آداپتور دوبل": r.adaptor,
+            "پیکتل": r.pigtail
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(excelRows);
+        ws['!dir'] = "rtl";
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "گزارش");
+
+        const user = localStorage.getItem(SESSION_KEY);
+        XLSX.writeFile(wb, `FiberBase_${user}_${Date.now()}.xlsx`);
+    }
+
+    // تب ۴: حساب کاربری و بکاپ
+    function renderAccountTab() {
+        const user = localStorage.getItem(SESSION_KEY);
+        const records = getUserRecords();
+        $('#accountUsernameDisplay').text(user);
+        $('#accountTotalRecords').text(records.length);
+    }
+
+    function backupUserData() {
+        const user = localStorage.getItem(SESSION_KEY);
+        const records = getUserRecords();
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(records, null, 2));
+        const dlAnchor = document.createElement('a');
+        dlAnchor.setAttribute("href", dataStr);
+        dlAnchor.setAttribute("download", `Backup_FiberBase_${user}_${Date.now()}.json`);
+        dlAnchor.click();
+    }
+
+    function restoreUserData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedRecords = JSON.parse(e.target.result);
+                if (Array.isArray(importedRecords)) {
+                    if (confirm(`تعداد ${importedRecords.length} رکورد پیدا شد. آیا می‌خواهید اطلاعات فعلی با این اطلاعات جایگزین شوند؟`)) {
+                        saveUserRecords(importedRecords);
+                        alert('اطلاعات با موفقیت بازیابی شد.');
+                        renderAccountTab();
+                    }
+                } else {
+                    alert('ساختار فایل پشتیبان معتبر نیست.');
+                }
+            } catch (err) {
+                alert('خطا در خواندن فایل.');
+            }
+        };
+        reader.readAsText(file);
+    }
+</script>
+
+</body>
+</html>
