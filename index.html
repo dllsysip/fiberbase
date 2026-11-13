@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FiberBasePWA</title>
+    
+    <!-- قابلیت‌های Standalone و PWA برای تبدیل به شورتکات اپ موبایل -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FiberBase">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- آیکون اپلیکیشن به صورت Base64 تعبیه شده در خود فایل -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='15%' fill='%230f172a'/%3E%3Cpath d='M140 256h232M256 140v232' stroke='%2338bdf8' stroke-width='40' stroke-linecap='round'/%3E%3Ccircle cx='256' cy='256' r='60' fill='%23f97316'/%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='15%' fill='%230f172a'/%3E%3Cpath d='M140 256h232M256 140v232' stroke='%2338bdf8' stroke-width='40' stroke-linecap='round'/%3E%3Ccircle cx='256' cy='256' r='60' fill='%23f97316'/%3E%3C/svg%3E">
+
+    <!-- مانیفست تعبیه‌شده برای قابلیت نصب و فول‌اسکرین در موبایل -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"FiberBase PWA","short_name":"FiberBase","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 512 512\'%3E%3Crect width=\'512\' height=\'512\' rx=\'15%27 fill=\'%230f172a\'/%3E%3Cpath d=\'M140 256h232M256 140v232\' stroke=\'%2338bdf8\' stroke-width=\'40\' stroke-linecap=\'round\'/%3E%3Ccircle cx=\'256\' cy=\'256\' r=\'60\' fill=\'%23f97316\'/%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml"}]}'>
+
+    <!-- بوت‌استرپ و فایل‌های استایل -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- استایل تقویم شمسی -->
+    <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css"/>
+
+    <!-- کتابخانه‌ها -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+    <script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+            padding-bottom: 80px;
+        }
+        .app-header {
+            background: #0f172a;
+            color: #fff;
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .card-custom {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 1000;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .nav-btn.active {
+            color: #2563eb;
+            font-weight: bold;
+        }
+        .nav-btn span:first-child {
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+        .tab-section {
+            display: none;
+            padding: 16px;
+        }
+        .tab-section.active {
+            display: block;
+        }
+        .section-label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #2563eb;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 4px;
+            margin-top: 16px;
+            margin-bottom: 12px;
+        }
+        .form-control, .form-select {
+            font-size: 14px;
+            border-radius: 8px;
+        }
+        .help-shortcut-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+            color: #1e40af;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- هدر برنامه -->
+    <div class="app-header rounded d-flex justify-content-between align-items-center m-2 shadow-sm">
+        <div class="fw-bold fs-6">FiberBasePWA</div>
+        <div><span class="badge bg-primary" id="displayUser"></span></div>
+    </div>
+
+    <!-- بخش احراز هویت (ورود / ثبت‌نام) -->
+    <div id="authContainer" class="container mt-4" style="max-width: 400px; display: none;">
+        <div class="help-shortcut-box">
+            💡 <strong>راهنما:</strong> برای استفاده آسان و بدون دردسر، روی سه‌نقطه مرورگر (در اندروید) یا دکمه اشتراک‌گذاری (در آیفون) بزنید و گزینه <strong>«افزودن به صفحه اصلی» (Add to Home screen)</strong> را انتخاب کنید تا آیکون برنامه روی صفحه موبایلتان ساخته شود.
+        </div>
+        <div class="card-custom">
+            <h4 class="fw-bold text-primary mb-1 text-center">FiberBasePWA</h4>
+            <p class="text-muted text-center mb-4" style="font-size: 13px;" id="authTitle">ورود به سامانه</p>
+            <form id="authForm">
+                <div class="mb-3">
+                    <label class="form-label text-secondary" style="font-size: 12px;">نام کاربری:</label>
+                    <input type="text" id="authUsername" class="form-control" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary" style="font-size: 12px;">رمز عبور:</label>
+                    <input type="password" id="authPassword" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mb-3" id="authSubmitBtn">ورود</button>
+                <div class="text-center">
+                    <a href="#" id="toggleAuthBtn" class="text-decoration-none" style="font-size: 13px;">حساب کاربری ندارید؟ ثبت‌نام کنید</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- بدنه اصلی اپلیکیشن -->
+    <div id="appContainer" style="display: none;">
+        
+        <!-- تب ۱: ثبت اطلاعات -->
+        <div id="tab1_content" class="tab-section active">
+            <div class="card-custom">
+                <h6 class="fw-bold text-primary mb-3">ثبت اطلاعات مشترک و تجهیزات</h6>
+                <form id="recordForm">
+                    <div class="section-label">مشخصات پایه مشترک</div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary" style="font-size: 12px;">تاریخ (تقویم لمسی):</label>
+                        <input type="text" id="f_date" class="form-control shamsi-picker" readonly required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary" style="font-size: 12px;">نام مشترک:</label>
+                        <input type="text" id="f_name" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label text-secondary" style="font-size: 12px;">موبایل:</label>
+                            <input type="tel" id="f_mobile" class="form-control" placeholder="09xxxxxxxxx">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label text-secondary" style="font-size: 12px;">تلفن ثابت:</label>
+                            <input type="text" id="f_phone" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary" style="font-size: 12px;">آدرس:</label>
+                        <textarea id="f_address" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <div class="section-label">کابل دراپ بیرونی (Out)</div>
+                    <div class="row">
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 2</label><input type="number" id="f_out2" class="form-control" value="0"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 4</label><input type="number" id="f_out4" class="form-control" value="0"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 6</label><input type="number" id="f_out6" class="form-control" value="0"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 8</label><input type="number" id="f_out8" class="form-control" value="0"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 12</label><input type="number" id="f_out12" class="form-control" value="0"></div>
+                    </div>
+
+                    <div class="section-label">باکس FAT</div>
+                    <div class="row">
+                        <div class="col-6 mb-2"><label class="form-label" style="font-size: 11px;">FAT 24</label><input type="number" id="f_fat24" class="form-control" value="0"></div>
+                        <div class="col-6 mb-2"><label class="form-label" style="font-size: 11px;">FAT 48</label><input type="number" id="f_fat48" class="form-control" value="0"></div>
+                    </div>
+
+                    <div class="section-label">کابل دراپ درونی (In)</div>
+                    <div class="row">
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 2</label><input type="number" id="f_in2" class="form-control" value="0"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 4</label><input type="number" id="f_in4" class="form-control" value="0"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 6</label><input type="number" id="f_in6" class="form-control" value="0"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 8</label><input type="number" id="f_in8" class="form-control" value="0"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 12</label><input type="number" id="f_in12" class="form-control" value="0"></div>
+                    </div>
+
+                    <div class="section-label">اتصالات و متعلقات</div>
+                    <div class="row">
+                        <div class="col-6 mb-3"><label class="form-label" style="font-size: 11px;">آداپتور دوبل</label><input type="number" id="f_adaptor" class="form-control" value="0"></div>
+                        <div class="col-6 mb-3"><label class="form-label" style="font-size: 11px;">پیکتل</label><input type="number" id="f_pigtail" class="form-control" value="0"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 mt-2">ثبت اطلاعات جدید</button>
+                </form>
+            </div>
+
+            <!-- آکاردئون مشاهده آخرین رکورد -->
+            <div class="accordion mb-3" id="lastRecordAccordion">
+                <div class="accordion-item border-0 shadow-sm rounded overflow-hidden">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed bg-white text-secondary py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLastRec" style="font-size: 13px;">
+                            📌 مشاهده آخرین رکورد ثبت‌شده
+                        </button>
+                    </h2>
+                    <div id="collapseLastRec" class="accordion-collapse collapse" data-bs-parent="#lastRecordAccordion">
+                        <div class="accordion-body bg-light" id="lastRecordDetail" style="font-size: 12px;">
+                            هنوز رکوردی ثبت نشده است.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- تب ۲: ویرایش و جستجو -->
+        <div id="tab2_content" class="tab-section">
+            <div class="card-custom">
+                <h6 class="fw-bold text-primary mb-3">جستجو و ویرایش رکورد</h6>
+                <div class="mb-3">
+                    <label class="form-label text-secondary" style="font-size: 12px;">جستجوی نام مشترک:</label>
+                    <input type="text" id="editSearchInput" class="form-control" placeholder="تایپ کنید...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary" style="font-size: 12px;">انتخاب مشترک مورد نظر:</label>
+                    <select id="editSelectRecord" class="form-select">
+                        <option value="">-- مشترک را انتخاب کنید --</option>
+                    </select>
+                </div>
+                <hr>
+                <form id="editForm" style="display: none;">
+                    <input type="hidden" id="edit_id">
+                    <div class="section-label">مشخصات پایه</div>
+                    <div class="mb-3"><label class="form-label text-secondary" style="font-size: 12px;">تاریخ:</label><input type="text" id="edit_date" class="form-control shamsi-picker" readonly required></div>
+                    <div class="mb-3"><label class="form-label text-secondary" style="font-size: 12px;">نام مشترک:</label><input type="text" id="edit_name" class="form-control" required></div>
+                    <div class="row">
+                        <div class="col-6 mb-3"><label class="form-label text-secondary" style="font-size: 12px;">موبایل:</label><input type="tel" id="edit_mobile" class="form-control"></div>
+                        <div class="col-6 mb-3"><label class="form-label text-secondary" style="font-size: 12px;">تلفن ثابت:</label><input type="text" id="edit_phone" class="form-control"></div>
+                    </div>
+                    <div class="mb-3"><label class="form-label text-secondary" style="font-size: 12px;">آدرس:</label><textarea id="edit_address" class="form-control" rows="2"></textarea></div>
+
+                    <div class="section-label">دراپ بیرونی (Out)</div>
+                    <div class="row">
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 2</label><input type="number" id="edit_out2" class="form-control"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 4</label><input type="number" id="edit_out4" class="form-control"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 6</label><input type="number" id="edit_out6" class="form-control"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 8</label><input type="number" id="edit_out8" class="form-control"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 12</label><input type="number" id="edit_out12" class="form-control"></div>
+                    </div>
+
+                    <div class="section-label">باکس FAT</div>
+                    <div class="row">
+                        <div class="col-6 mb-2"><label class="form-label" style="font-size: 11px;">FAT 24</label><input type="number" id="edit_fat24" class="form-control"></div>
+                        <div class="col-6 mb-2"><label class="form-label" style="font-size: 11px;">FAT 48</label><input type="number" id="edit_fat48" class="form-control"></div>
+                    </div>
+
+                    <div class="section-label">دراپ درونی (In)</div>
+                    <div class="row">
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 2</label><input type="number" id="edit_in2" class="form-control"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 4</label><input type="number" id="edit_in4" class="form-control"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 6</label><input type="number" id="edit_in6" class="form-control"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 8</label><input type="number" id="edit_in8" class="form-control"></div>
+                        <div class="col-4 mb-2"><label class="form-label" style="font-size: 11px;">دراپ 12</label><input type="number" id="edit_in12" class="form-control"></div>
+                    </div>
+
+                    <div class="section-label">متعلقات</div>
+                    <div class="row">
+                        <div class="col-6 mb-3"><label class="form-label" style="font-size: 11px;">آداپتور دوبل</label><input type="number" id="edit_adaptor" class="form-control"></div>
+                        <div class="col-6 mb-3"><label class="form-label" style="font-size: 11px;">پیکتل</label><input type="number" id="edit_pigtail" class="form-control"></div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-warning flex-grow-1 py-2 fw-bold text-dark">ذخیره تغییرات</button>
+                        <button type="button" class="btn btn-danger py-2 px-3" onclick="deleteSelectedRecord()">حذف رکورد</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- تب ۳: گزارشات و خروجی اکسل -->
+        <div id="tab3_content" class="tab-section">
+            <div class="card-custom">
+                <h6 class="fw-bold text-primary mb-3">فیلتر گزارش بر اساس تاریخ</h6>
+                <div class="mb-3">
+                    <label class="form-label text-secondary" style="font-size: 12px;">از تاریخ:</label>
+                    <input type="text" id="reportStartDate" class="form-control shamsi-picker" readonly placeholder="انتخاب تاریخ">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary" style="font-size: 12px;">تا تاریخ:</label>
+                    <input type="text" id="reportEndDate" class="form-control shamsi-picker" readonly placeholder="انتخاب تاریخ">
+                </div>
+                <div class="d-flex gap-2 mb-3">
+                    <button class="btn btn-primary flex-grow-1" onclick="applyDateFilter()">اعمال فیلتر</button>
+                    <button class="btn btn-outline-secondary" onclick="resetDateFilter()">نمایش همه</button>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-secondary" style="font-size: 12px;">نتایج (<span id="reportCount">0</span> رکورد):</span>
+                    <button class="btn btn-success btn-sm" onclick="exportFilteredExcel()">📥 خروجی اکسل</button>
+                </div>
+                <div class="table-responsive" style="max-height: 300px;">
+                    <table class="table table-bordered table-striped" style="font-size: 11px;">
+                        <thead class="table-dark text-nowrap">
+                            <tr>
+                                <th>#</th>
+                                <th>تاریخ</th>
+                                <th>مشترک</th>
+                                <th>موبایل</th>
+                                <th>تلفن</th>
+                                <th>آدرس</th>
+                                <th>دراپ 2 Out</th>
+                                <th>دراپ 4 Out</th>
+                                <th>دراپ 6 Out</th>
+                                <th>دراپ 8 Out</th>
+                                <th>دراپ 12 Out</th>
+                                <th>FAT 24</th>
+                                <th>FAT 48</th>
+                                <th>دراپ 2 In</th>
+                                <th>دراپ 4 In</th>
+                                <th>دراپ 6 In</th>
+                                <th>دراپ 8 In</th>
+                                <th>دراپ 12 In</th>
+                                <th>آداپتور</th>
+                                <th>پیکتل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- تب ۴: حساب کاربری و درباره نرم‌افزار -->
+        <div id="tab4_content" class="tab-section">
+            <div class="card-custom text-center py-4">
+                <div class="fs-1 mb-2">👤</div>
+                <h5 class="fw-bold" id="accountUsernameDisplay">نام کاربر</h5>
+                <p class="text-muted" style="font-size: 12px;">تعداد کل رکوردهای ثبت‌شده: <span id="accountTotalRecords" class="badge bg-primary">0</span></p>
+                <div class="d-grid gap-2 my-3">
+                    <button class="btn btn-outline-primary btn-sm" onclick="backupUserData()">📤 دانلود بکاپ اطلاعات (JSON)</button>
+                    <label class="btn btn-outline-success btn-sm m-0" style="cursor: pointer;">
+                        📥 بازیابی اطلاعات از بکاپ <input type="file" id="restoreFileInput" accept=".json" style="display: none;" onchange="restoreUserData(event)">
+                    </label>
+                </div>
+                <hr>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-dark btn-sm flex-grow-1" onclick="logout()">🚪 خروج از حساب کاربری</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteMyAccount()">🗑️ حذف حساب</button>
+                </div>
+            </div>
+
+            <!-- درباره نرم‌افزار -->
+            <div class="card-custom">
+                <h6 class="fw-bold text-primary mb-3" style="font-size: 13px;">درباره نرم‌افزار</h6>
+                <ul class="list-group list-group-flush" style="font-size: 12px;">
+                    <li class="list-group-item d-flex justify-content-between"><span>نام نرم‌افزار:</span> <strong>FiberBasePWA</strong></li>
+                    <li class="list-group-item d-flex justify-content-between"><span>نسخه نرم‌افزار:</span> <span class="badge bg-success">v2.2.0</span></li>
+                    <li class="list-group-item d-flex justify-content-between"><span>تاریخ آخرین نسخه:</span> <span>1405/08/22</span></li>
+                    <li class="list-group-item d-flex justify-content-between"><span>نام برنامه‌نویس:</span> <strong>علی محمودی</strong></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ناوبری پایین صفحه -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" id="navTab1" onclick="switchTab('tab1')"><span>📝</span><span>ثبت جدید</span></button>
+            <button class="nav-btn" id="navTab2" onclick="switchTab('tab2')"><span>✏️</span><span>ویرایش</span></button>
+            <button class="nav-btn" id="navTab3" onclick="switchTab('tab3')"><span>📊</span><span>گزارشات</span></button>
+            <button class="nav-btn" id="navTab4" onclick="switchTab('tab4')"><span>👤</span><span>حساب کاربری</span></button>
+        </nav>
+    </div>
+
+    <!-- اسکریپت‌های منطق برنامه -->
+    <script>
+        const USERS_KEY = 'FTTH_USERS';
+        const SESSION_KEY = 'GAPGPTMASKTOKENqjvl7rpnqzdX1X';
+        let currentEditingId = null;
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function checkSession() {
+            const user = localStorage.getItem(SESSION_KEY);
+            if (user) {
+                $('#authContainer').hide();
+                $('#appContainer').show();
+                $('#displayUser').text(user);
+                $('#accountUsernameDisplay').text(user);
+                updateAccountStats();
+                renderLastRecord();
+                populateEditSelect();
+                renderReportTable();
+            } else {
+                $('#appContainer').hide();
+                $('#authContainer').show();
+            }
+        }
+
+        function switchTab(tabId) {
+            $('.tab-section').removeClass('active');
+            $('.nav-btn').removeClass('active');
+            $('#' + tabId + '_content').addClass('active');
+            
+            if (tabId === 'tab1') $('#navTab1').addClass('active');
+            if (tabId === 'tab2') { $('#navTab2').addClass('active'); populateEditSelect(); }
+            if (tabId === 'tab3') { $('#navTab3').addClass('active'); renderReportTable(); }
+            if (tabId === 'tab4') { $('#navTab4').addClass('active'); updateAccountStats(); }
+        }
+
+        $(document).ready(function() {
+            $('.shamsi-picker').persianDatepicker({
+                format: 'YYYY/MM/DD',
+                initialValue: true,
+                autoClose: true,
+                calendar: { persian: { leapYearMode: 'astronomical' } }
+            });
+
+            checkSession();
+
+            let isReg = false;
+            $('#toggleAuthBtn').on('click', function(e) {
+                e.preventDefault();
+                isReg = !isReg;
+                if (isReg) {
+                    $('#authTitle').text('ثبت‌نام حساب جدید');
+                    $('#authSubmitBtn').text('ثبت‌نام');
+                    $('#toggleAuthBtn').text('حساب کاربری دارید؟ ورود');
+                } else {
+                    $('#authTitle').text('ورود به سامانه');
+                    $('#authSubmitBtn').text('ورود');
+                    $('#toggleAuthBtn').text('حساب کاربری ندارید؟ ثبت‌نام کنید');
+                }
+            });
+
+            $('#authForm').on('submit', async function(e) {
+                e.preventDefault();
+                const u = $('#authUsername').val().trim();
+                const p = $('#authPassword').val();
+                if (!u || !p) return;
+                const hashed = await sha256(p);
+                let users = JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+
+                if (isReg) {
+                    if (users[u]) { alert('این نام کاربری قبلاً ثبت شده است.'); return; }
+                    users[u] = hashed;
+                    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+                    localStorage.setItem(SESSION_KEY, u);
+                    alert('ثبت‌نام و ورود با موفقیت انجام شد.');
+                } else {
+                    if (!users[u] || users[u] !== hashed) { alert('نام کاربری یا رمز عبور اشتباه است.'); return; }
+                    localStorage.setItem(SESSION_KEY, u);
+                }
+                $('#authForm')[0].reset();
+                checkSession();
+            });
+
+            $('#recordForm').on('submit', function(e) {
+                e.preventDefault();
+                const user = localStorage.getItem(SESSION_KEY);
+                const recordsKey = 'FTTH_DATA_' + user;
+                let records = JSON.parse(localStorage.getItem(recordsKey) || '[]');
+
+                const newRec = {
+                    id: Date.now(),
+                    date: $('#f_date').val(),
+                    name: $('#f_name').val(),
+                    mobile: $('#f_mobile').val(),
+                    phone: $('#f_phone').val(),
+                    address: $('#f_address').val(),
+                    out2: $('#f_out2').val() || 0,
+                    out4: $('#f_out4').val() || 0,
+                    out6: $('#f_out6').val() || 0,
+                    out8: $('#f_out8').val() || 0,
+                    out12: $('#f_out12').val() || 0,
