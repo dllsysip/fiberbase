@@ -177,7 +177,7 @@
                 حساب کاربری ندارید؟ ثبت‌نام کنید
             </button>
         </div>
-        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.8</span></div>
+        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.9</span></div>
     </div>
 
     <!-- داشبورد اصلی -->
@@ -441,7 +441,7 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>نسخه نرم‌افزار:</span>
-                        <span class="badge bg-success">v2.3.8</span>
+                        <span class="badge bg-success">v2.3.9</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>تاریخ آخرین نسخه:</span>
@@ -553,8 +553,7 @@
             if (opts.input) el.addEventListener('shown.bs.modal', () => $('#' + id + 'i').trigger('focus'));
         });
     }
-    // کد تأیید = چهار رقم آخر موبایل × این ضریب (فقط برای کنترل ساده، امنیت واقعی ندارد)
-    const INVITE_MULTIPLIER = 7;
+    // کد تأیید = 1364 + 10 × چهار رقم آخر موبایل (فقط کنترل ساده، امنیت واقعی ندارد)
     function showError(msg) { return showDialog(msg); }
     function notify(msg) { return showDialog(msg); }
     function askConfirm(msg) { return showDialog(msg, { confirm: true }); }
@@ -807,7 +806,7 @@
                 return;
             }
             const code = toEnDigits($('#authCode').val().trim());
-            if (code !== String(Number(mobile.slice(-4)) * INVITE_MULTIPLIER)) {
+            if (code !== String(1364 + 10 * Number(mobile.slice(-4)))) {
                 showError('کد تأیید اشتباه است.');
                 return;
             }
