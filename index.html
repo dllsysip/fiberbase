@@ -159,8 +159,7 @@
             <div class="mb-3" id="codeGroup" style="display:none;">
                 <label class="form-label">کد درخواست (این عدد را برای مدیر بفرستید):</label>
                 <div class="d-flex align-items-center gap-2 mb-2">
-                    <span id="challengeBox" class="form-control text-center fw-bold" dir="ltr" style="max-width:140px;background:#f1f5f9;">----</span>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="newChallengeBtn">کد جدید</button>
+                    <span id="challengeBox" class="form-control text-center fw-bold" dir="ltr" style="max-width:160px;background:#f1f5f9;">----</span>
                 </div>
                 <label class="form-label" for="authCode">کد تأیید (از مدیر دریافت کنید):</label>
                 <input type="text" id="authCode" class="form-control" maxlength="10" inputmode="numeric" dir="ltr" autocomplete="off">
@@ -181,7 +180,7 @@
                 حساب کاربری ندارید؟ ثبت‌نام کنید
             </button>
         </div>
-        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.10</span></div>
+        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.11</span></div>
     </div>
 
     <!-- داشبورد اصلی -->
@@ -445,7 +444,7 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>نسخه نرم‌افزار:</span>
-                        <span class="badge bg-success">v2.3.10</span>
+                        <span class="badge bg-success">v2.3.11</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>تاریخ آخرین نسخه:</span>
@@ -557,14 +556,12 @@
             if (opts.input) el.addEventListener('shown.bs.modal', () => $('#' + id + 'i').trigger('focus'));
         });
     }
-    // کد درخواست = ساعت و دقیقه (HHmm)؛ کد تأیید = 1364 + 10 × گرد(کد درخواست ÷ 2) (کنترل ساده، امنیت واقعی ندارد)
+    // کد درخواست = شمارنده دقیقه از 1970 (۶ رقم آخر)؛ کد تأیید = 1364 + 10 × گرد(کد درخواست ÷ 2) (کنترل ساده، امنیت واقعی ندارد)
     let currentChallenge = '';
     function newChallenge() {
-        const d = new Date();
-        currentChallenge = String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
+        currentChallenge = String(Math.floor(Date.now() / 60000) % 1000000).padStart(6, '0');
         $('#challengeBox').text(currentChallenge);
     }
-    $(document).on('click', '#newChallengeBtn', newChallenge);
     function showError(msg) { return showDialog(msg); }
     function notify(msg) { return showDialog(msg); }
     function askConfirm(msg) { return showDialog(msg, { confirm: true }); }
