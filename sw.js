@@ -1,5 +1,5 @@
 // Service Worker برای کار آفلاین (stale-while-revalidate)
-const CACHE_NAME = 'fiberbase-v2.3.2';
+const CACHE_NAME = 'fiberbase-v2.3.4';
 const APP_SHELL = ['./', './index.html', './manifest.json', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png'];
 const CDN = [
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css',
@@ -13,13 +13,13 @@ const CDN = [
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(async (cache) => {
-                await cache.addAll(APP_SHELL);
-                await Promise.all(CDN.map((u) =>
-                    fetch(u, { mode: 'no-cors' }).then((r) => cache.put(u, r)).catch(() => {})));
-            })
-            .then(() => self.skipWaiting())
+        caches.open(CACHE_NAME).then(async (cache) => {
+            // فایل‌های خود برنامه؛ خطا در یک فایل نصب را متوقف نمی‌کند
+            await Promise.all(APP_SHELL.map((u) => cache.add(u).catch(() => {})));
+            // کتابخانه‌های CDN در پس‌زمینه ذخیره می‌شوند و نصب را معطل نمی‌کنند
+            event.waitUntil(Promise.all(CDN.map((u) =>
+                fetch(u, { mode: 'no-cors' }).then((r) => cache.put(u, r)).catch(() => {}))));
+        }).then(() => self.skipWaiting())
     );
 });
 
