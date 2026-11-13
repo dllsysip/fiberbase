@@ -1,6 +1,6 @@
 // Service Worker برای کار آفلاین (stale-while-revalidate)
-const CACHE_NAME = 'fiberbase-v2.3.1';
-const APP_SHELL = ['./', './index.html', './manifest.json', './icons/icon.svg'];
+const CACHE_NAME = 'fiberbase-v2.3.2';
+const APP_SHELL = ['./', './index.html', './manifest.json', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png'];
 const CDN = [
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css',
     'https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css',
