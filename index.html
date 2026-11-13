@@ -157,9 +157,13 @@
                 <input type="tel" id="authMobile" class="form-control" maxlength="11" inputmode="numeric" dir="ltr" placeholder="09123456789" autocomplete="off">
             </div>
             <div class="mb-3" id="codeGroup" style="display:none;">
-                <label class="form-label" for="authCode">کد تأیید:</label>
+                <label class="form-label">کد درخواست (این عدد را برای مدیر بفرستید):</label>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span id="challengeBox" class="form-control text-center fw-bold" dir="ltr" style="max-width:140px;background:#f1f5f9;">----</span>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="newChallengeBtn">کد جدید</button>
+                </div>
+                <label class="form-label" for="authCode">کد تأیید (از مدیر دریافت کنید):</label>
                 <input type="text" id="authCode" class="form-control" maxlength="10" inputmode="numeric" dir="ltr" autocomplete="off">
-                <div class="form-text">شماره موبایل خود را برای مدیر ارسال کنید و کد تأیید را از او دریافت کنید.</div>
             </div>
             <div class="mb-3">
                 <label class="form-label" for="authUsername">نام کاربری:</label>
@@ -177,7 +181,7 @@
                 حساب کاربری ندارید؟ ثبت‌نام کنید
             </button>
         </div>
-        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.9</span></div>
+        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.10</span></div>
     </div>
 
     <!-- داشبورد اصلی -->
@@ -441,7 +445,7 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>نسخه نرم‌افزار:</span>
-                        <span class="badge bg-success">v2.3.9</span>
+                        <span class="badge bg-success">v2.3.10</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>تاریخ آخرین نسخه:</span>
@@ -553,7 +557,14 @@
             if (opts.input) el.addEventListener('shown.bs.modal', () => $('#' + id + 'i').trigger('focus'));
         });
     }
-    // کد تأیید = 1364 + 10 × چهار رقم آخر موبایل (فقط کنترل ساده، امنیت واقعی ندارد)
+    // کد درخواست = ساعت و دقیقه (HHmm)؛ کد تأیید = 1364 + 10 × گرد(کد درخواست ÷ 2) (کنترل ساده، امنیت واقعی ندارد)
+    let currentChallenge = '';
+    function newChallenge() {
+        const d = new Date();
+        currentChallenge = String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0');
+        $('#challengeBox').text(currentChallenge);
+    }
+    $(document).on('click', '#newChallengeBtn', newChallenge);
     function showError(msg) { return showDialog(msg); }
     function notify(msg) { return showDialog(msg); }
     function askConfirm(msg) { return showDialog(msg, { confirm: true }); }
@@ -769,6 +780,7 @@
         $('#authSubmitBtn').text(isRegisterMode ? 'ثبت‌نام' : 'ورود');
         $('#passwordHint').toggle(isRegisterMode);
         $('#fullNameGroup, #mobileGroup, #codeGroup').toggle(isRegisterMode);
+        if (isRegisterMode) newChallenge();
         $('#authPassword').attr('autocomplete', isRegisterMode ? 'new-password' : 'current-password');
         $(this).text(isRegisterMode ? 'حساب دارید؟ وارد شوید' : 'حساب کاربری ندارید؟ ثبت‌نام کنید');
         $('#authForm')[0].reset();
@@ -806,7 +818,7 @@
                 return;
             }
             const code = toEnDigits($('#authCode').val().trim());
-            if (code !== String(1364 + 10 * Number(mobile.slice(-4)))) {
+            if (code !== String(1364 + 10 * Math.round(Number(currentChallenge) / 2))) {
                 showError('کد تأیید اشتباه است.');
                 return;
             }
