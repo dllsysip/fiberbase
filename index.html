@@ -139,8 +139,8 @@
     <!-- ورود و ثبت نام -->
     <div id="authSection" class="card-custom mt-4">
         <div class="help-shortcut-box">
-            💡 <strong>راهنما:</strong> برای استفاده آسان، از منوی مرورگر گزینه <strong>«افزودن به صفحه اصلی» (Add to Home screen)</strong> را انتخاب کنید.
-            برای کار آفلاین، برنامه باید از طریق <strong>HTTPS</strong> یا <strong>localhost</strong> باز شود.
+            💡 <strong>راهنما:</strong> این برنامه کاملاً آفلاین کار می‌کند و تمام اطلاعات در مرورگر شما ذخیره می‌شود.
+            برای دسترسی سریع‌تر، می‌توانید آن را از منوی مرورگر به صفحه اصلی اضافه کنید.
         </div>
 
         <div class="text-center mb-3">
@@ -154,7 +154,7 @@
             </div>
             <div class="mb-3">
                 <label class="form-label" for="authPassword">رمز عبور:</label>
-                <input type="password" id="authPassword" class="form-control" required minlength="6" autocomplete="current-password">
+                <input type="password" id="authPassword" class="form-control" required autocomplete="current-password">
                 <div class="form-text" id="passwordHint" style="display:none;">حداقل ۶ کاراکتر.</div>
             </div>
             <button type="submit" class="btn btn-primary w-100 py-2" id="authSubmitBtn">ورود</button>
@@ -164,7 +164,7 @@
                 حساب کاربری ندارید؟ ثبت‌نام کنید
             </button>
         </div>
-        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.2</span></div>
+        <div class="text-center mt-2 text-muted" style="font-size: 12px;">نسخه <span dir="ltr">v2.3.4</span></div>
     </div>
 
     <!-- داشبورد اصلی -->
@@ -428,7 +428,7 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>نسخه نرم‌افزار:</span>
-                        <span class="badge bg-success">v2.3.2</span>
+                        <span class="badge bg-success">v2.3.4</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span>تاریخ آخرین نسخه:</span>
@@ -478,8 +478,20 @@
         }[c]));
     }
 
+    function toEnDigits(str) {
+        if (str == null) return '';
+        const fa = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+        const ar = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+        let s = String(str);
+        for (let i = 0; i < 10; i++) {
+            s = s.replace(new RegExp(fa[i], 'g'), i);
+            s = s.replace(new RegExp(ar[i], 'g'), i);
+        }
+        return s;
+    }
+
     function toNum(v) {
-        const n = Math.floor(Number(v));
+        const n = Math.floor(Number(toEnDigits(v)));
         return Number.isFinite(n) && n > 0 ? n : 0;
     }
 
@@ -567,7 +579,7 @@
     function normalizeRecord(r, forcedId) {
         if (!r || typeof r !== 'object') return null;
         const name = String(r.name ?? '').trim();
-        const date = String(r.date ?? '').trim();
+        const date = toEnDigits(String(r.date ?? '').trim());
         if (!name || !DATE_RE.test(date)) return null;
 
         const rec = {
@@ -609,13 +621,13 @@
 
     function readFormValues(prefix) {
         const rec = {
-            date: $('#' + prefix + 'date').val(),
+            date: toEnDigits($('#' + prefix + 'date').val()),
             name: $('#' + prefix + 'name').val(),
-            mobile: $('#' + prefix + 'mobile').val(),
-            phone: $('#' + prefix + 'phone').val(),
+            mobile: toEnDigits($('#' + prefix + 'mobile').val()),
+            phone: toEnDigits($('#' + prefix + 'phone').val()),
             address: $('#' + prefix + 'address').val()
         };
-        NUM_FIELDS.forEach(k => { rec[k] = $('#' + prefix + k).val(); });
+        NUM_FIELDS.forEach(k => { rec[k] = toEnDigits($('#' + prefix + k).val()); });
         return rec;
     }
 
@@ -638,6 +650,15 @@
         });
 
         $('#f_date').val(new persianDate().format('YYYY/MM/DD'));
+
+        $('#authPassword').on('input', function () {
+            if (this.value.length > 0 && this.value.length < 6) {
+                this.setCustomValidity('رمز عبور باید حداقل ۶ کاراکتر باشد.');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
         checkSession();
         registerServiceWorker();
     });
